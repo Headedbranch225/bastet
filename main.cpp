@@ -34,23 +34,37 @@ using namespace boost::assign;
 int main(int argc, char **argv){
   Ui ui;
   while(1){
-    
-    int choice=ui.MenuDialog(list_of("Play! (normal version)")("Play! (harder version)")("View highscores")("Customize keys")("Quit"));
+    bool enter;
+    int choice;
+    pair<int,bool> choicePair=ui.MenuDialog(list_of("Play! (normal version)")("Play! (harder version)")("View highscores")("Customize keys")("Quit"));
+    tie(choice, enter) = choicePair;
     switch(choice){
     case 0:{
-      //ui.ChooseLevel();
-      BastetBlockChooser bc;
-      ui.Play(&bc);
-      ui.HandleHighScores(difficulty_normal);
-      ui.ShowHighScores(difficulty_normal);
+      if(enter){
+        //ui.ChooseLevel();
+        BastetBlockChooser bc;
+        ui.Play(&bc);
+        ui.HandleHighScores(difficulty_normal);
+        ui.ShowHighScores(difficulty_normal);
+      }
+      else{
+        NiceBlockChooser bc;
+        ui.Play(&bc);
+      }
     }
       break;
     case 1:{
-      //ui.ChooseLevel();
-      NoPreviewBlockChooser bc;
-      ui.Play(&bc);
-      ui.HandleHighScores(difficulty_hard);
-      ui.ShowHighScores(difficulty_hard);
+      if(enter){
+        //ui.ChooseLevel();
+        NoPreviewBlockChooser bc;
+        ui.Play(&bc);
+        ui.HandleHighScores(difficulty_hard);
+        ui.ShowHighScores(difficulty_hard);
+      }
+      else{
+        NiceNoPreview bc;
+        ui.Play(&bc);
+      }
     }
       break;
     case 2:

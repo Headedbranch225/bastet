@@ -58,7 +58,7 @@ namespace Bastet{
     void MessageDialog(const std::string &message); //shows msg, ask for "space"
     std::string InputDialog(const std::string &message); //asks for a string
     int KeyDialog(const std::string &message); //asks for a single key
-    int MenuDialog(const std::vector<std::string> &choices); //asks to choose one, returns index
+    std::pair<int,bool> MenuDialog(const std::vector<std::string> &choices); //asks to choose one, returns index
     void RedrawStatic(); //redraws the "static" parts of the screen
     void RedrawWell(const Well *well, BlockType falling, const BlockPosition &pos);
     void ClearNext(); //clear the next block display

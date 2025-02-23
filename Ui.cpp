@@ -228,13 +228,12 @@ namespace Bastet{
     return getch();
   }
   
-  int Ui::MenuDialog(const vector<string> &choices){
+  std::pair<int,bool> Ui::MenuDialog(const vector<string> &choices){
     RedrawStatic();
     size_t width=0;
     BOOST_FOREACH(const string &s, choices){
       width=max(width,s.size());
     }
-
     Dot d={int(width+5),int(choices.size())};
     BorderedWindow w(d.y,d.x);
     wattrset((WINDOW *)w,COLOR_PAIR(20));
@@ -246,33 +245,38 @@ namespace Bastet{
     PrepareUiGetch();
     size_t chosen=0;
     int ch;
+    bool enterUsed=true;
     bool done=false;
     mvwprintw(w,chosen,1,"-> ");
     wrefresh(w);
-    do{
+    while(!done) {
       ch=getch();
       switch(ch){
       case KEY_UP:
-	if(chosen==0) break;
-	mvwprintw(w,chosen,1,"   ");
-	chosen--;
-	mvwprintw(w,chosen,1,"-> ");
-	wrefresh(w);
-	break;
+        if(chosen==0) break;
+        mvwprintw(w,chosen,1,"   ");
+        chosen--;
+        mvwprintw(w,chosen,1,"-> ");
+        wrefresh(w);
+        break;
       case KEY_DOWN:
-	if(chosen==choices.size()-1) break;
-	mvwprintw(w,chosen,1,"   ");
-	chosen++;
-	mvwprintw(w,chosen,1,"-> ");
-	wrefresh(w);
-	break;
+        if(chosen==choices.size()-1) break;
+        mvwprintw(w,chosen,1,"   ");
+        chosen++;
+        mvwprintw(w,chosen,1,"-> ");
+        wrefresh(w);
+        break;
       case 13: //ENTER
+        done=true;
+        break;
       case ' ':
-	done=true;
-	break;
+        done=true;
+        enterUsed=false;
+        break;
       }
-    } while(!done);
-    return chosen;
+    }
+    pair<int,bool> returning(chosen, enterUsed);
+    return returning;
   }
   
   void Ui::ChooseLevel(){

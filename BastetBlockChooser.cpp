@@ -58,13 +58,72 @@ namespace Bastet{
     return score;
   }
 
-  BastetBlockChooser::BastetBlockChooser(){
+  NiceBlockChooser::NiceBlockChooser(){}
+  NiceBlockChooser::~NiceBlockChooser(){}
+  Queue NiceBlockChooser::GetStartingQueue(){
+    Queue q;
+    //The first block is always I,J,L,T (cfr. Tetris guidelines, Bastet is a gentleman and chooses the most favorable start for the user).
+    BlockType first;
+    switch(random()%4){
+    case 0:
+      first=I;break;
+    case 1:
+      first=J;break;
+    case 2:
+      first=L;break;
+    case 3:
+      first=T;break;
+    }
+    q.push_back(first);
+    q.push_back(BlockType(random()%nBlockTypes));
+    return q;
   }
-  
-  BastetBlockChooser::~BastetBlockChooser(){
 
+  boost::array<long,nBlockTypes> NiceBlockChooser::ComputeMainScores(const Well *well, BlockType currentBlock){
+    RecursiveVisitor visitor;
+    Searcher(currentBlock,well,BlockPosition(),&visitor);
+    return visitor.GetScores();
   }
 
+
+  BlockType NiceBlockChooser::GetNext(const Well *well, const Queue &q){
+    boost::array<long,nBlockTypes> mainScores=ComputeMainScores(well,q.front());
+    boost::array<long,nBlockTypes> finalScores=mainScores;
+
+    //perturbes scores to randomize tie handling
+    BOOST_FOREACH(long &i, finalScores)
+      i+=(random()%100);
+
+    //prints the final scores, for debugging convenience
+    for(size_t i=0;i<nBlockTypes;++i){
+      //mvprintw(i,1,"%c: %d",GetChar(BlockType(i)),finalScores[i]);
+    }
+
+    //the mainScores alone would give rise to many repeated blocks (e.g., in the case in which only one type of block does not let you clear a line, you keep getting that). This is bad, since it would break the "plausibility" of the sequence you get. We need a correction.
+    
+    boost::array<long,nBlockTypes> temp(finalScores);
+    sort(temp.begin(),temp.end());
+    reverse(temp.begin(),temp.end());
+
+    //always returns the worst block if it's different from the last one
+    int worstblock=find(finalScores.begin(),finalScores.end(),temp[0])-finalScores.begin();
+    if(BlockType(worstblock) != q.front()) return BlockType(worstblock);
+    
+    //otherwise, returns the pos-th block, where pos is random
+    static const boost::array<int,nBlockTypes> blockPercentages={{80, 92, 98, 100, 100, 100, 100}};
+    int pos=find_if(blockPercentages.begin(),blockPercentages.end(),bind2nd(greater_equal<int>(),random()%100)) - blockPercentages.begin();
+    assert(pos>=0 && pos<nBlockTypes);
+
+    int chosenBlock=find(finalScores.begin(),finalScores.end(),temp[pos])-finalScores.begin();
+    return BlockType(chosenBlock);
+    
+    //return BlockType(min_element(finalScores.begin(),finalScores.end())-finalScores.begin());
+    //return BlockType(random()%7);
+  }
+  // //////////////////////////////////////////////////////////
+
+  BastetBlockChooser::BastetBlockChooser(){}
+  BastetBlockChooser::~BastetBlockChooser(){}
   Queue BastetBlockChooser::GetStartingQueue(){
     Queue q;
     //The first block is always I,J,L,T (cfr. Tetris guidelines, Bastet is a gentleman and chooses the most favorable start for the user).
@@ -124,7 +183,6 @@ namespace Bastet{
     //return BlockType(min_element(finalScores.begin(),finalScores.end())-finalScores.begin());
     //return BlockType(random()%7);
   }
-
   Searcher::Searcher(BlockType b, const Well *well, Vertex v, WellVisitor *visitor):_block(b),_well(well),_visitor(visitor){
     DFSVisit(v);
   }
@@ -172,6 +230,54 @@ namespace Bastet{
     } catch(const GameOver &go){} //catches the exception which might be thrown by LockAndClearLines
   }
 
+  NiceNoPreview::NiceNoPreview(){};
+  NiceNoPreview::~NiceNoPreview(){};
+  Queue NiceNoPreview::GetStartingQueue(){
+    Queue q;
+    //The first block is always I,J,L,T (cfr. Tetris guidelines, Bastet is a gentleman and chooses the most favorable start for the user).
+    BlockType first;
+    switch(random()%4){
+    case 0:
+      first=I;break;
+    case 1:
+      first=J;break;
+    case 2:
+      first=L;break;
+    case 3:
+      first=T;break;
+    }
+    q.push_back(first);
+    return q;
+  }
+
+  BlockType NiceNoPreview::GetNext(const Well *well, const Queue &q){
+    assert(q.empty());
+    boost::array<long,nBlockTypes> finalScores;
+    for(size_t t=0;t<nBlockTypes;++t){
+      BestScoreVisitor v;
+      Searcher searcher(BlockType(t),well,BlockPosition(),&v);
+      finalScores[t]=v.GetScore();
+    }
+
+    //perturbes scores to randomize tie handling
+    BOOST_FOREACH(long &i, finalScores)
+      i+=(random()%100);
+
+    //sorts
+    boost::array<long,nBlockTypes> temp(finalScores);
+    sort(temp.begin(),temp.end());
+    reverse(temp.begin(),temp.end());
+
+    //returns the pos-th block, where pos is random
+    static const boost::array<int,nBlockTypes> blockPercentages={{80, 92, 98, 100, 100, 100, 100}};
+    int pos=find_if(blockPercentages.begin(),blockPercentages.end(),bind2nd(greater_equal<int>(),random()%100)) - blockPercentages.begin();
+    assert(pos>=0 && pos<nBlockTypes);
+
+    int chosenBlock=find(finalScores.begin(),finalScores.end(),temp[pos])-finalScores.begin();
+    return BlockType(chosenBlock);
+
+  }
+  
   NoPreviewBlockChooser::NoPreviewBlockChooser(){};
   NoPreviewBlockChooser::~NoPreviewBlockChooser(){};
   Queue NoPreviewBlockChooser::GetStartingQueue(){

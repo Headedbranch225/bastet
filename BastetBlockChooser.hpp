@@ -96,12 +96,36 @@ namespace Bastet{
   private:
     
   };
+  
+  class NiceBlockChooser: public BlockChooser{
+  public:
+    NiceBlockChooser();
+    virtual ~NiceBlockChooser();
+    virtual Queue GetStartingQueue();
+    virtual BlockType GetNext(const Well *well, const Queue &q);
+    /**
+     * computes "scores" of the candidate next blocks by dropping them in all possible positions and choosing the one that has the least max_(drop positions) Evaluate(well)
+     */
+    boost::array<long,7> ComputeMainScores(const Well *well, BlockType currentBlock);
+    
+  private:
+    
+  };
 
   //block chooser similar to the older bastet versions, does not give a block preview
   class NoPreviewBlockChooser:public BlockChooser{
   public:
     NoPreviewBlockChooser();
     virtual ~NoPreviewBlockChooser();
+    virtual Queue GetStartingQueue();
+    virtual BlockType GetNext(const Well *well, const Queue &q);
+  };
+  
+  //block chooser similar to the older bastet versions, does not give a block preview
+  class NiceNoPreview:public BlockChooser{
+  public:
+    NiceNoPreview();
+    virtual ~NiceNoPreview();
     virtual Queue GetStartingQueue();
     virtual BlockType GetNext(const Well *well, const Queue &q);
   };
